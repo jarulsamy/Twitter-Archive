@@ -9,7 +9,7 @@ ap.add_argument(
     "-d",
     "--download_dir",
     required=False,
-    help="Output path of downloads",
+    help="Output folder of downloads",
     default=Path(Path.home(), "Downloads", "twitter_downloader"),
 )
 

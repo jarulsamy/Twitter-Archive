@@ -53,9 +53,11 @@ class TwitterBookmarkDownloader(object):
 
         uname = self.driver.find_element_by_name("session[username_or_email]")
         pword = self.driver.find_element_by_name("session[password]")
-
-        uname.send_keys(self.username)
-        pword.send_keys(self.password)
+        try:
+            uname.send_keys(self.username)
+            pword.send_keys(self.password)
+        except TypeError:
+            raise ValueError("Missing username/password")
 
         # Find the submit button
         self.driver.find_element_by_xpath(

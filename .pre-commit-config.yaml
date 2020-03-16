@@ -9,8 +9,6 @@ repos:
     - id: check-yaml
     - id: check-added-large-files
     - id: check-case-conflict
-    - id: fix-encoding-pragma
-    # - id: double-quote-string-fixer
 
 
   - repo: https://github.com/asottile/reorder_python_imports

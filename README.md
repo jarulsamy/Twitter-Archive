@@ -30,6 +30,10 @@ Optionally, use the command line arguments:
                             Specify password as argument
       --headless            Run without user input and firefox window display.
 
+## Why this is so janky
+
+Currently, there is no _offically_ supported twitter bookmarks API endpoint. Thus, I used selnium to manually scrape the HTML for each tweet. According to the [twitter feedback forum](https://twitterdevfeedback.uservoice.com/forums/921790-twitter-developer-labs/suggestions/39678766-api-endpoint-for-getting-bookmarks), the bookmarks API is comming. Until then, I don't plan on updating this. I don't see a reason to develop an increasingly complex janky solution when an official API route is en route.
+
 ## Support
 
 Reach out to me at one of the following places!

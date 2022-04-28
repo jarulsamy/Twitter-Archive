@@ -2,7 +2,7 @@
 
 A selenium based python script to download all images from bookmarked tweets.
 
-### Setup
+## Setup
 
 This software is only compatible with **Python 3.6+**.
 
@@ -10,11 +10,15 @@ Install the required dependencies using the `requirements.txt` file.
 
     pip install -r requirements.txt
 
-> **Selenium** is required for this application when running with python. Please install selenium and the **Firefox Gecko Webdriver**. Add it to your platform specific PATH based on the [Selenium Documentation](https://selenium-python.readthedocs.io/index.html).
+> **Selenium** is required for this application when running with python. Please
+> install selenium and the **Firefox Gecko Webdriver**. Add it to your platform
+> specific PATH based on the [Selenium
+> Documentation](https://selenium-python.readthedocs.io/index.html).
 
-### Run
+## Run
 
-Run `main.py` to start. Enter your username, password, and if enabled, 2fa code when prompted.
+Run `main.py` to start. Enter your username, password, and if enabled, 2fa code
+when prompted.
 
 Optionally, use the command line arguments:
 
@@ -32,13 +36,21 @@ Optionally, use the command line arguments:
 
 ## Why this is so janky
 
-Currently, there is no _offically_ supported twitter bookmarks API endpoint. Thus, I used selnium to manually scrape the HTML for each tweet. According to the [twitter feedback forum](https://twitterdevfeedback.uservoice.com/forums/921790-twitter-developer-labs/suggestions/39678766-api-endpoint-for-getting-bookmarks), the bookmarks API is comming. Until then, I don't plan on updating this. I don't see a reason to develop an increasingly complex janky solution when an official API route is en route.
+Currently, there is no _officially_ supported twitter bookmarks API endpoint.
+Thus, I used selenium to manually scrape the HTML for each tweet. According to
+the [twitter feedback
+forum](https://twitterdevfeedback.uservoice.com/forums/921790-twitter-developer-labs/suggestions/39678766-api-endpoint-for-getting-bookmarks),
+the bookmarks API is coming. Until then, I don't plan on updating this. I don't
+see a reason to develop an increasingly complex janky solution when an official
+API route is en route.
 
-## Support
+### Update (2022-04-27)
 
-Reach out to me at one of the following places!
+The
+[new](https://twittercommunity.com/t/build-with-bookmarks-on-the-twitter-api-v2/168804)
+API endpoint is finally live after nearly 2 years since the initial feature
+request! In the upcoming months, I hope to revisit this project, and build a new
+solution that doesn't require any user spoofing using selenium, and instead
+use these new API endpoints for a safer, faster, better user experience.
 
--   Email (Best) at joshua.gf.arul@gmail.com
--   Twitter at <a href="http://twitter.com/jarulsamy_" target="_blank">`@jarulsamy_`</a>
-
-* * *
+---

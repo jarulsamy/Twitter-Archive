@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 from json import JSONEncoder
 from pathlib import Path
 import datetime
@@ -9,9 +8,6 @@ import tweepy
 
 import http.server
 import socketserver
-
-# DEBUG
-from pprint import pprint
 
 
 class OneShotTCPServer(socketserver.TCPServer):
@@ -85,27 +81,36 @@ class TweetEncoder(JSONEncoder):
             return super().default(obj)
 
 
-load_dotenv()
+def _oauth(
+    save_path,
+    client_id=None,
+    client_secret=None,
+    use_dotenv=False,
+    headless=False,
+):
+    REDIRECT_PORT = 8080
+    REDIRECT_URI = f"http://localhost:{REDIRECT_PORT}"
+    if use_dotenv:
+        from dotenv import load_dotenv
 
-CACHE_PATH = Path("access_token_cache.json")
-API_KEY = os.environ.get("API_KEY", "")
-API_KEY_SECRET = os.environ.get("API_KEY_SECRET", "")
-BEARER_TOKEN = os.environ.get("BEARER_TOKEN", "")
-ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN", "")
-ACCESS_TOKEN_SECRET = os.environ.get("ACCESS_TOKEN_SECRET", "")
-CLIENT_ID = os.environ.get("CLIENT_ID", "")
-CLIENT_SECRET = os.environ.get("CLIENT_SECRET", "")
+        load_dotenv()
 
-REDIRECT_PORT = 8080
-REDIRECT_URI = f"http://localhost:{REDIRECT_PORT}"
+    client_id = client_id or os.environ.get("TWITTER_ARCHIVE_CLIENT_ID")
+    client_secret = client_secret or os.environ.get("TWITTER_ARCHIVE_CLIENT_SECRET")
 
+    print(client_id)
+    print(client_secret)
 
-def _oauth(save_path, headless=False):
+    if client_id is None:
+        raise ValueError("Missing client ID")
+    if client_secret is None:
+        raise ValueError("Missing client secret")
+
     oauth2_user_handler = tweepy.OAuth2UserHandler(
-        client_id=CLIENT_ID,
+        client_id=client_id,
         redirect_uri=REDIRECT_URI,
         scope=["tweet.read", "users.read", "bookmark.read"],
-        client_secret=CLIENT_SECRET,
+        client_secret=client_secret,
     )
     print(oauth2_user_handler.get_authorization_url())
 
@@ -126,12 +131,23 @@ def _oauth(save_path, headless=False):
 
 
 def auth(
-    cache_path="access_token.json", use_cache=True, headless=False
-) -> tweepy.Client:
+    cache_path="access_token.json",
+    use_cache=True,
+    client_id=None,
+    client_secret=None,
+    use_dotenv=False,
+    headless=False,
+):
     """Login to the Twitter API"""
     cache_path = None if cache_path is None else Path(cache_path)
     if not use_cache or not cache_path.is_file():
-        access_token = _oauth(cache_path, headless)
+        access_token = _oauth(
+            cache_path,
+            client_id=client_id,
+            client_secret=client_secret,
+            use_dotenv=use_dotenv,
+            headless=headless,
+        )
     else:
         # Try to use the cache if possible.
         with open(cache_path, "r") as json_file:
@@ -139,7 +155,13 @@ def auth(
 
         # Check if expired, if so re-auth.
         if float(access_token["expires_at"]) < time.time():
-            access_token = _oauth(cache_path, headless)
+            access_token = _oauth(
+                cache_path,
+                client_id=client_id,
+                client_secret=client_secret,
+                use_dotenv=use_dotenv,
+                headless=headless,
+            )
 
     client = tweepy.Client(
         access_token["access_token"],
@@ -149,85 +171,87 @@ def auth(
     return client
 
 
-client = auth()
+def download_tweet_metadata(client, save_path=None):
+    media = {}
+    tweets = []
 
-media = {}
-tweets = []
+    page_token = None
+    while True:
+        resp = client.get_bookmarks(
+            expansions=[
+                "attachments.poll_ids",
+                "attachments.media_keys",
+                "author_id",
+                "geo.place_id",
+                "referenced_tweets.id",
+            ],
+            max_results=100,
+            pagination_token=page_token,
+            media_fields=[
+                "media_key",
+                "type",
+                "url",
+                "duration_ms",
+                "height",
+                "width",
+                "alt_text",
+                "variants",
+            ],
+            place_fields=[
+                "full_name",
+                "id",
+                "geo",
+            ],
+            poll_fields=[
+                "id",
+                "options",
+                "duration_minutes",
+                "end_datetime",
+                "voting_status",
+            ],
+            tweet_fields=[
+                "id",
+                "text",
+                "attachments",
+                "author_id",
+                "conversation_id",
+                "created_at",
+                "geo",
+                "lang",
+                "possibly_sensitive",
+                "referenced_tweets",
+                "source",
+            ],
+            user_fields=["id"],
+        )
 
-page_token = None
-while True:
-    resp = client.get_bookmarks(
-        expansions=[
-            "attachments.poll_ids",
-            "attachments.media_keys",
-            "author_id",
-            "geo.place_id",
-            "referenced_tweets.id",
-        ],
-        max_results=100,
-        pagination_token=page_token,
-        media_fields=[
-            "media_key",
-            "type",
-            "url",
-            "duration_ms",
-            "height",
-            "width",
-            "alt_text",
-            "variants",
-        ],
-        place_fields=[
-            "full_name",
-            "id",
-            "geo",
-        ],
-        poll_fields=[
-            "id",
-            "options",
-            "duration_minutes",
-            "end_datetime",
-            "voting_status",
-        ],
-        tweet_fields=[
-            "id",
-            "text",
-            "attachments",
-            "author_id",
-            "conversation_id",
-            "created_at",
-            "geo",
-            "lang",
-            "possibly_sensitive",
-            "referenced_tweets",
-            "source",
-        ],
-        user_fields=["id"],
-    )
+        try:
+            for i in resp.includes["media"]:
+                media[i.media_key] = i
+        except KeyError:
+            pass
 
-    try:
-        for i in resp.includes["media"]:
-            media[i.media_key] = i
-    except KeyError:
-        pass
+        for i in resp.data:
+            if i.data.get("attachments", {}).get("media_keys") is None:
+                tweets.append(dict(i))
+                continue
 
-    for i in resp.data:
-        if i.data.get("attachments", {}).get("media_keys") is None:
-            tweets.append(dict(i))
-            continue
+            tweet = dict(i)
+            tweet["media"] = []
+            for media_key in i["attachments"]["media_keys"]:
+                tweet["media"].append(media[media_key].data)
 
-        tweet = dict(i)
-        tweet["media"] = []
-        for media_key in i["attachments"]["media_keys"]:
-            tweet["media"].append(media[media_key].data)
+            tweets.append(tweet)
 
-        tweets.append(tweet)
+        # We retrieve tweets in pages of 100.
+        # Go until no more exist.
+        try:
+            page_token = resp.meta["next_token"]
+        except KeyError:
+            break
 
-    # We retrieve tweets in pages of 100.
-    # Go until no more exist.
-    try:
-        page_token = resp.meta["next_token"]
-    except KeyError:
-        break
+    if save_path is not None:
+        with open(save_path, "w") as fp:
+            json.dump(tweets, fp, indent=2, cls=TweetEncoder)
 
-with open("bookmarks.json", "w") as fp:
-    json.dump(tweets, fp, indent=2, cls=TweetEncoder)
+    return tweets

@@ -1,0 +1,2 @@
+tweepy==4.10.0
+python-dotenv==0.20.0

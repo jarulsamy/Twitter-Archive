@@ -54,3 +54,54 @@ solution that doesn't require any user spoofing using selenium, and instead
 use these new API endpoints for a safer, faster, better user experience.
 
 ---
+
+### Roadmap
+
+1. Login to the API using `tweepy` and `OAuth2UserHandler`
+
+2. Retrieve all the bookmarks.
+
+    + URL
+    + Text
+    + Media
+      + Key
+      + URL
+      + Alt Text
+      + Type
+      + Height
+      + Width
+    + ID of tweet author
+    + IDs of all the replies
+
+3. Iterate over all the JSON data and download whatever we want.
+
+---
+
+### Roadmap V2.0
+
+1. Login to the API using `tweepy` and `OAuth2UserHandler`
+
+2. Retrieve all the bookmarks.
+
+   + ID
+
+3. Write a generic method which rips all the following from a tweet given an ID:
+
+   + Author ID
+   + URL
+   + Text
+   + Creation Date
+   + Media
+      + Key
+      + URL
+      + Alt Text
+      + Type
+      + Height
+      + Width
+   + Tweet Source
+   + Number of retweets/quotes/likes
+   + IDs of all reply tweets
+
+4. Call the aforementioned method on all the reply tweets to the parent bookmark tweet.
+
+5. Repeat until we hit a maxium depth

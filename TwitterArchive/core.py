@@ -15,7 +15,7 @@ from pprint import pprint
 
 
 class OneShotTCPServer(socketserver.TCPServer):
-    def server_activate(self) -> None:
+    def serve_forever(self) -> None:
         raise NotImplementedError(
             "Use socketserver.TCPServer to handle several requests instead."
         )
@@ -151,7 +151,6 @@ def auth(
 
 client = auth()
 
-resps = []
 media = {}
 tweets = []
 
@@ -204,12 +203,6 @@ while True:
         ],
         user_fields=["id"],
     )
-    try:
-        page_token = resp.meta["next_token"]
-    except KeyError:
-        break
-
-    resps.append(resp)
 
     try:
         for i in resp.includes["media"]:
@@ -218,7 +211,7 @@ while True:
         pass
 
     for i in resp.data:
-        if i.get("attachments", {}).get("media_keys") is None:
+        if i.data.get("attachments", {}).get("media_keys") is None:
             tweets.append(dict(i))
             continue
 
@@ -228,6 +221,13 @@ while True:
             tweet["media"].append(media[media_key].data)
 
         tweets.append(tweet)
+
+    # We retrieve tweets in pages of 100.
+    # Go until no more exist.
+    try:
+        page_token = resp.meta["next_token"]
+    except KeyError:
+        break
 
 with open("bookmarks.json", "w") as fp:
     json.dump(tweets, fp, indent=2, cls=TweetEncoder)

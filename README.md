@@ -1,107 +1,71 @@
 # Twitter-Bookmark-Downloader
 
-A selenium based python script to download all images from bookmarked tweets.
+A CLI python application to download all media (and hopefully more) from all
+bookmarked tweets. Eventually I hope to make this a general archive utility for
+Twitter, allowing users to download/archive all kinds of tweets.
 
-## Setup
-
-This software is only compatible with **Python 3.6+**.
-
-Install the required dependencies using the `requirements.txt` file.
-
-    pip install -r requirements.txt
-
-> **Selenium** is required for this application when running with python. Please
-> install selenium and the **Firefox Gecko Webdriver**. Add it to your platform
-> specific PATH based on the [Selenium
-> Documentation](https://selenium-python.readthedocs.io/index.html).
+Originally, before the V2 Twitter API, this app used Selenium to try and scrape
+the contents of the a users bookmarks page. Now, since the release of the V2
+API, the application has been rewritten. This new version is much faster and
+more robust.
 
 ## Run
 
-Run `main.py` to start. Enter your username, password, and if enabled, 2fa code
-when prompted.
+This software is only compatible with **Python 3.9+**.
 
-Optionally, use the command line arguments:
+>TODO: Document how to create Twitter Developer App.
 
-    usage: main.py [-h][-d DOWNLOAD_DIR] [-u USERNAME][-p PASSWORD] [--headless]
+1. Clone the repository
 
-    optional arguments:
-      -h, --help            show this help message and exit
-      -d DOWNLOAD_DIR, --download_dir DOWNLOAD_DIR
-                            Output folder of downloads
-      -u USERNAME, --username USERNAME
-                            Specify user as argument to circumvent prompt
-      -p PASSWORD, --password PASSWORD
-                            Specify password as argument
-      --headless            Run without user input and firefox window display.
+   ```sh
+   $ git clone https://github.com/jarulsamy/twitter-bookmark-downloader
+   $ cd twitter-bookmark-downloader
+   ```
 
-## Why this is so janky
+2. Install the application with `setuptools`.
 
-Currently, there is no _officially_ supported twitter bookmarks API endpoint.
-Thus, I used selenium to manually scrape the HTML for each tweet. According to
-the [twitter feedback
-forum](https://twitterdevfeedback.uservoice.com/forums/921790-twitter-developer-labs/suggestions/39678766-api-endpoint-for-getting-bookmarks),
-the bookmarks API is coming. Until then, I don't plan on updating this. I don't
-see a reason to develop an increasingly complex janky solution when an official
-API route is en route.
+   ```sh
+   $ python setup.py install
+   ```
 
-### Update (2022-04-27)
+3. Run the application
 
-The
-[new](https://twittercommunity.com/t/build-with-bookmarks-on-the-twitter-api-v2/168804)
-API endpoint is finally live after nearly 2 years since the initial feature
-request! In the upcoming months, I hope to revisit this project, and build a new
-solution that doesn't require any user spoofing using selenium, and instead
-use these new API endpoints for a safer, faster, better user experience.
+   ```sh
+   $ twitter-archive
+   ```
 
----
+By default, the app will print a URL to prompt the user to authorize the
+application with Twitters official APIs. Once you navigate to that link and
+login with Twitter, the app will fetch a manifest of all the bookmarked tweets
+and begin saving any photos/videos to disk.
 
-### Roadmap
+You can view the built-in CLI help menu for more info:
 
-1. Login to the API using `tweepy` and `OAuth2UserHandler`
+```txt
+$ twitter-archive --help
+Twitter Archival Tool
 
-2. Retrieve all the bookmarks.
+A CLI tool to archive tweets.
 
-    + URL
-    + Text
-    + Media
-      + Key
-      + URL
-      + Alt Text
-      + Type
-      + Height
-      + Width
-    + ID of tweet author
-    + IDs of all the replies
+Usage:
+    twitter-archive [options]
 
-3. Iterate over all the JSON data and download whatever we want.
+Options:
+    -s, --skip                  Use the existing metadata file if possible.
+    -o, --media-output=FILE     Path to output media    [default: ./media]
+    -m, --metadata-output=FILE  Path to output metadata [default: ./bookmarks.json]
+    --headless                  Don't use interactive authentication
 
----
+    -h --help                   Show this help
+    -v --version                Show version
 
-### Roadmap V2.0
+```
 
-1. Login to the API using `tweepy` and `OAuth2UserHandler`
+## Acknowledgements
 
-2. Retrieve all the bookmarks.
+The Twitter dev team did an excellent job on the new APIs. The new APIs are
+substantially more intuitive and allow us to interact with many more features of
+Twitter. While it did take two years, I appreciate the openness, transparency,
+and attention to feedback.
 
-   + ID
-
-3. Write a generic method which rips all the following from a tweet given an ID:
-
-   + Author ID
-   + URL
-   + Text
-   + Creation Date
-   + Media
-      + Key
-      + URL
-      + Alt Text
-      + Type
-      + Height
-      + Width
-   + Tweet Source
-   + Number of retweets/quotes/likes
-   + IDs of all reply tweets
-
-4. Call the aforementioned method on all the reply tweets to the parent bookmark tweet.
-
-5. Repeat until we hit a maxium depth
+The relevant forumn post is available [here](https://twittercommunity.com/t/build-with-bookmarks-on-the-twitter-api-v2/168804).

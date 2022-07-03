@@ -1,13 +1,16 @@
-from json import JSONEncoder
-from pathlib import Path
 import datetime
+import http.server
 import json
 import os
-import time
-import tweepy
-
-import http.server
 import socketserver
+import time
+from json import JSONEncoder
+from pathlib import Path
+from urllib.parse import urlparse
+
+import requests
+import tweepy
+from tqdm import tqdm
 
 
 class OneShotTCPServer(socketserver.TCPServer):
@@ -171,7 +174,7 @@ def auth(
     return client
 
 
-def download_tweet_metadata(client, save_path=None):
+def get_bookmarks(client, save_path=None):
     media = {}
     tweets = []
 
@@ -250,8 +253,61 @@ def download_tweet_metadata(client, save_path=None):
         except KeyError:
             break
 
+    data = json.dumps(tweets, indent=2, cls=TweetEncoder)
+
     if save_path is not None:
         with open(save_path, "w") as fp:
-            json.dump(tweets, fp, indent=2, cls=TweetEncoder)
+            fp.write(data)
 
-    return tweets
+    return json.loads(data)
+
+
+def download_tweet(tweet_obj, base_dir: Path, chunk_size=1024, position=0):
+    if "id" not in tweet_obj:
+        raise AttributeError("Missing attribute ID, is this a valid tweet object?")
+
+    my_dir = base_dir / str(tweet_obj["id"])
+    my_dir.mkdir(exist_ok=True)
+
+    try:
+        for media in tweet_obj["media"]:
+            type_ = media["type"]
+            if type_ == "video":
+                # Only save videos with a bitrate
+                variants = [x for x in media["variants"] if "bit_rate" in x]
+                max_variant = max(variants, key=lambda x: x["bit_rate"])
+                url = max_variant["url"]
+            elif type_ == "photo":
+                url = media["url"]
+            else:
+                raise NotImplementedError(f"Type: '{type_}' not supported")
+
+            dest = my_dir / Path(urlparse(url).path).name
+            resp = requests.get(url, stream=True)
+            length = resp.headers.get("content-length")
+            with open(dest, "wb") as f:
+                # No content length header
+                if length is None:
+                    f.write(resp.content)
+                else:
+                    # Progress bar
+                    length = int(length)
+                    num_bars = int(length / chunk_size)
+
+                    for chunk in tqdm(
+                        resp.iter_content(chunk_size=chunk_size),
+                        ascii=True,
+                        total=num_bars,
+                        desc=dest.name,
+                        leave=True,
+                        unit="KB",
+                        position=position,
+                        miniters=1,
+                        ncols=80,
+                    ):
+                        f.write(chunk)
+    except KeyError:
+        return
+    except NotImplementedError as e:
+        print(e)
+        return

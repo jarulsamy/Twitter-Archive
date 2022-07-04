@@ -1,4 +1,5 @@
 import datetime
+from http import client
 import http.server
 import json
 import os
@@ -6,7 +7,9 @@ import socketserver
 import time
 from json import JSONEncoder
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
+
+from werkzeug.urls import url_fix
 
 import requests
 import tweepy
@@ -56,12 +59,14 @@ Success, you may close this tab!
 </html>
     """.encode()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request, client_address, server):
         self._token = None
-        super().__init__(*args, **kwargs)
+        super().__init__(request, client_address, server)
 
     def do_GET(self):
-        self._token = f"https://{self.address_string()}{self.path}"
+        # Normalize the URL.
+        host, port = self.client_address
+        self._token = urlunparse(urlparse(f"https://{host}:{port}{self.path}"))
 
         self.send_response(200)
         self.send_header("Content-type", "text/html")

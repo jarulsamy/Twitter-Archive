@@ -1,4 +1,6 @@
 """
+Main entrypoint to the program from CLI.
+
 Usage: twitter-archive [-o FILE] [--headless] [-h] [-v] [-m FILE | -i FILE]
 
 A CLI Tool to archive tweets

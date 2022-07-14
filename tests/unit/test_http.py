@@ -1,11 +1,10 @@
-from TwitterArchive.core import HTTPRequestHandler
 import io
 import unittest
-from urllib.parse import urlparse, urlunparse
+
+from TwitterArchive.core import OAuthRequestHandler
 
 
 class HTTPRequestHandlerTestCase(unittest.TestCase):
-
     def test_handler(self):
         host = "127.0.0.1"
         port = 8080
@@ -24,4 +23,4 @@ class HTTPRequestHandlerTestCase(unittest.TestCase):
                 handler = Handler(MockRequest(), ip_port, server_self)
                 self.assertEqual(expected, handler.token)
 
-        MockServer((host, port), HTTPRequestHandler)
+        MockServer((host, port), OAuthRequestHandler)

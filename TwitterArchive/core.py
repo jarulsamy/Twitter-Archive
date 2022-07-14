@@ -1,5 +1,9 @@
+"""Core internals of the application.
+
+Contains the major interactions with external APIs.
+Handles authentication with Twitter, and fetching all necessary Tweets.
+"""
 import datetime
-from http import client
 import http.server
 import json
 import os
@@ -7,9 +11,9 @@ import socketserver
 import time
 from json import JSONEncoder
 from pathlib import Path
+from socket import socket
+from typing import Any, Optional
 from urllib.parse import urlparse, urlunparse
-
-from werkzeug.urls import url_fix
 
 import requests
 import tweepy
@@ -17,22 +21,38 @@ from tqdm import tqdm
 
 
 class OneShotTCPServer(socketserver.TCPServer):
+    """TCP server to handle a single HTTP request."""
+
     def serve_forever(self) -> None:
+        """Remove unsupported method from parent server.
+
+        :raises: NotImplementedError
+        """
         raise NotImplementedError(
             "Use socketserver.TCPServer to handle several requests instead."
         )
 
-    def process_request(self, request, client_address):
-        """Call finish_request."""
+    def process_request(self, request: socket, client_address: str) -> Any:
+        """Process a single HTTP request to the server.
+
+        :param request: Request from a client to handle.
+        :param client_address: Address of the client sending the request.
+        :returns: Instance of the request handler.
+        """
         handler_inst = self.finish_request(request, client_address)
         self.shutdown_request(request)
         return handler_inst
 
-    def finish_request(self, request, client_address):
+    def finish_request(self, request: socket, client_address: str) -> Any:
+        """Handoff a single request to the handler.
+
+        :param request: Request from a client to handle.
+        :param client_address: Address of the client sending the request.
+        :returns: Instance of the request handler.
+        """
         return self.RequestHandlerClass(request, client_address, self)
 
-    def _handle_request_noblock(self):
-        """Handle one request, without blocking."""
+    def _handle_request_noblock(self) -> Any:
         try:
             request, client_address = self.get_request()
         except OSError:
@@ -50,8 +70,10 @@ class OneShotTCPServer(socketserver.TCPServer):
             self.shutdown_request(request)
 
 
-class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
-    resp = r"""<!doctype html>
+class OAuthRequestHandler(http.server.BaseHTTPRequestHandler):
+    """Handle a OAuth success request."""
+
+    success_resp = r"""<!doctype html>
 <html lang="en">
 <h1>
 Success, you may close this tab!
@@ -59,11 +81,24 @@ Success, you may close this tab!
 </html>
     """.encode()
 
-    def __init__(self, request, client_address, server):
+    def __init__(self, request: socket, client_address: str, server: str):
+        """Initialze a new instance of the handler.
+
+        :param request: Request to handle.
+        :param client_address: Address of the client sending the request.
+        :param server: Address of the server itself.
+        """
+        print("-----")
+        print(type(request))
+        print("-----")
         self._token = None
         super().__init__(request, client_address, server)
 
-    def do_GET(self):
+    def do_GET(self) -> None:
+        """Handle a GET request.
+
+        Sends back the OAuth token as a parameter in the URL.
+        """
         # Normalize the URL.
         host, port = self.client_address
         self._token = urlunparse(urlparse(f"https://{host}:{port}{self.path}"))
@@ -72,15 +107,26 @@ Success, you may close this tab!
         self.send_header("Content-type", "text/html")
         self.end_headers()
 
-        self.wfile.write(self.resp)
+        self.wfile.write(self.success_resp)
 
     @property
-    def token(self):
+    def token(self) -> str:
+        """Retrieve the token.
+
+        :returns: Token assuming successful authentication.
+        """
         return self._token
 
 
 class TweetEncoder(JSONEncoder):
-    def default(self, obj):
+    """Custom encoder to serialize a series of Tweets."""
+
+    def default(self, obj: Any) -> dict:
+        """Serialize Tweets, handling recursive cases.
+
+        :param obj: Object to be serialized
+        :returns: Ready to be written as JSON, dict equivalent of obj.
+        """
         if isinstance(obj, datetime.datetime):
             return str(obj.isoformat())
         elif isinstance(obj, tweepy.ReferencedTweet):
@@ -90,12 +136,31 @@ class TweetEncoder(JSONEncoder):
 
 
 def _oauth(
-    save_path,
-    client_id=None,
-    client_secret=None,
-    use_dotenv=False,
-    headless=False,
-):
+    save_path: Path,
+    client_id: Optional[str] = None,
+    client_secret: Optional[str] = None,
+    use_dotenv: bool = False,
+    headless: bool = False,
+) -> dict:
+    """Authenticate with the Twitter API using OAuth 2.X.
+
+    The client ID and secret parameters, if not specified, are loaded from the
+    'TWITTER_ARCHIVE_CLIENT_ID' and 'TWITTER_ARCHIVE_CLIENT_SECRET' environment
+    variables respectively.
+
+    :param save_path: Path to save the access token.
+    :param client_id: Client ID from the Twitter dev app portal.
+    :param client_secret: Client secret from the Twitter dev app portal.
+    :param use_dotenv: Load a .env file automatically.
+    :param headless: Disable interactive authentication.
+
+    :returns: Access token details.
+
+    :raises: ValueError - Missing client ID: client ID not specified and
+                          'TWITTER_ARCHIVE_CLIENT_ID' is unset.
+    :raises: ValueError - Missing client secret: client secret not specified and
+                          'TWITTER_ARCHIVE_CLIENT_ID' is unset.
+    """
     REDIRECT_PORT = 8080
     REDIRECT_URI = f"http://localhost:{REDIRECT_PORT}"
     if use_dotenv:
@@ -124,7 +189,7 @@ def _oauth(
 
     if not headless:
         # Start the HTTP server to receive the token.
-        handler = HTTPRequestHandler
+        handler = OAuthRequestHandler
         with OneShotTCPServer(("", REDIRECT_PORT), handler) as httpd:
             handler_inst = httpd.handle_request()
             response_url = handler_inst.token
@@ -139,14 +204,36 @@ def _oauth(
 
 
 def auth(
-    cache_path="access_token.json",
-    use_cache=True,
-    client_id=None,
-    client_secret=None,
-    use_dotenv=False,
-    headless=False,
-):
-    """Login to the Twitter API"""
+    cache_path: str = "access_token.json",
+    use_cache: bool = True,
+    client_id: Optional[str] = None,
+    client_secret: Optional[str] = None,
+    use_dotenv: bool = False,
+    headless: bool = False,
+) -> tweepy.Client:
+    """Login to the Twitter API.
+
+    A wrapper of the _oauth() method, but uses a cache to avoid reauthenticating
+    if possible.
+
+    The client ID and secret parameters, if not specified, are loaded from the
+    'TWITTER_ARCHIVE_CLIENT_ID' and 'TWITTER_ARCHIVE_CLIENT_SECRET' environment
+    variables respectively.
+
+    :param cache_path: Path to cache access token details.
+    :param use_cache: Whether to attempt loading token details from cache.
+    :param client_id: Client ID from the Twitter dev app portal.
+    :param client_secret: Client secret from the Twitter dev app portal.
+    :param use_dotenv: Load a .env file automatically.
+    :param headless: Disable interactive authentication.
+
+    :returns: Instance of the tweepy client.
+
+    :raises: ValueError: Missing client ID, client ID not specified and
+                         'TWITTER_ARCHIVE_CLIENT_ID' is unset.
+    :raises: ValueError: Missing client secret, client secret not specified and
+                         'TWITTER_ARCHIVE_CLIENT_ID' is unset.
+    """
     cache_path = None if cache_path is None else Path(cache_path)
     if not use_cache or not cache_path.is_file():
         access_token = _oauth(
@@ -179,7 +266,14 @@ def auth(
     return client
 
 
-def get_bookmarks(client, save_path=None):
+def get_bookmarks(client: tweepy.Client, save_path: Optional[Path] = None) -> dict:
+    """Fetch all bookmarked tweets.
+
+    :param client: Authenticated Twitter user whos bookmarks to fetch.
+    :param save_path: Path to save manifest of all the tweets.
+
+    :returns: Serialized dict of all the tweets.
+    """
     media = {}
     tweets = []
 
@@ -267,7 +361,19 @@ def get_bookmarks(client, save_path=None):
     return json.loads(data)
 
 
-def download_tweet(tweet_obj, base_dir: Path, chunk_size=1024, position=0):
+def download_tweet(
+    tweet_obj: dict,
+    base_dir: Path,
+    chunk_size: int = 1024,
+    position: int = 0,
+) -> None:
+    """Download media from a single tweet.
+
+    :param tweet_obj: Dict including all the attributes of the tweet.
+    :param base_dir: Base directory to save any media.
+    :param chunk_size: Chunk size to use while downloading content.
+    :param position: Progress bar position.
+    """
     if "id" not in tweet_obj:
         raise AttributeError("Missing attribute ID, is this a valid tweet object?")
 

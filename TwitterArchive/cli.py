@@ -18,17 +18,20 @@ Options:
                         (default: None)
 """
 
+import argparse
 import json
 import sys
+# TODO: Use a native thread pool instead of multiprocessing
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-import argparse
 
 from . import __version__
 from .core import auth, download_tweet, get_bookmarks
 
 
 class CapitalisedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    """Use a more sane capitaliztion in help argparse help menus."""
+
     def add_usage(self, usage, actions, groups, prefix=None):
         if prefix is None:
             prefix = "Usage: "
@@ -40,7 +43,16 @@ class CapitalisedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
         )
 
 
+# TODO: Add dry run
+# TODO: Add quiet
+# TODO: Add no thread pool option
+# TODO: Add --no-clobber
 def build_parser(exit_on_error=True):
+    """Build the CLI parser.
+
+    :param exit_on_error: Terminate the program (sys.exit) if there is a
+                          semantic failure with CLI flags.
+    """
     parser = argparse.ArgumentParser(
         add_help=False,
         description="A CLI Tool to archive tweets",
@@ -103,6 +115,10 @@ def build_parser(exit_on_error=True):
 
 
 def main():
+    """Entrypoint from CLI.
+
+    Parse the CLI arguments, and download all the tweets.
+    """
     parser = build_parser()
     args = parser.parse_args()
     args = vars(args)

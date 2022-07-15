@@ -23,8 +23,10 @@ Options:
 import argparse
 import itertools
 import json
+import logging
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
+from typing import Optional
 
 from . import __version__
 from .core import auth, download_tweet, get_bookmarks
@@ -45,7 +47,8 @@ class CapitalisedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
         )
 
 
-def _nat_int(s):
+def nat_int(s: str) -> int:
+    """Type validator for natural integers."""
     int_val = int(s)
     if int_val < 1:
         raise argparse.ArgumentTypeError("Cannot be less than 1")
@@ -54,7 +57,7 @@ def _nat_int(s):
 
 # TODO: Add dry run
 # TODO: Add quiet
-def build_parser(exit_on_error=True):
+def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
     """Build the CLI parser.
 
     :param exit_on_error: Terminate the program (sys.exit) if there is a
@@ -98,9 +101,15 @@ def build_parser(exit_on_error=True):
     parser.add_argument(
         "--num-download-threads",
         metavar="N",
-        type=_nat_int,
+        type=nat_int,
         default=8,
         help="Number of threads to use while downloading media.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
     )
     parser.add_argument(
         "-h",
@@ -110,7 +119,6 @@ def build_parser(exit_on_error=True):
         help="Show this help message ane exit.",
     )
     parser.add_argument(
-        "-v",
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -138,7 +146,34 @@ def build_parser(exit_on_error=True):
     return parser
 
 
-def main():
+def _setup_logging(lvl: int) -> logging.Logger:
+    if lvl == 0:
+        log_level = logging.ERROR
+    elif lvl == 1:
+        log_level = logging.WARNING
+    elif lvl == 2:
+        log_level = logging.INFO
+    else:
+        log_level = logging.DEBUG
+
+    logging.basicConfig(
+        level=logging.ERROR,  # Third party libs use this log level
+        format="%(asctime)s %(name)-16s %(levelname)-8s %(threadName)s %(message)s",
+    )
+
+    logger = logging.getLogger("twitter-archive")
+    # My code uses this log level
+    logger.setLevel(log_level)
+    logger.debug(
+        "Initialized logger with log level %s (verbose=%s)",
+        logging._levelToName[log_level],
+        lvl,
+    )
+
+    return logger
+
+
+def main() -> None:
     """Entrypoint from CLI.
 
     Parse the CLI arguments, and download all the tweets.
@@ -147,17 +182,24 @@ def main():
     args = parser.parse_args()
     args = vars(args)
 
+    logger = _setup_logging(args["verbose"])
+
+    logger.debug("Authenticating")
     client = auth(headless=args["headless"], use_dotenv=True)
+
     if args["manifest_input"] is not None:
+        logger.info("Loaded existing manifest from '%s'", args["manifest_input"])
         with open(args["manifest_input"], "r") as fp:
             tweets = json.load(fp)
     else:
+        logger.info("Fetching manifest from Twitter.")
         tweets = get_bookmarks(client, save_path=args["manifest_output"])
 
     base_dir = Path(args["media_output"])
     base_dir.mkdir(exist_ok=True, parents=True)
 
     num_download_threads = args["num_download_threads"]
+    logger.info("Downloading all media with %d threads", num_download_threads)
     if num_download_threads == 1:
         for tweet in tweets:
             download_tweet(tweet, base_dir, not args["no_clobber"], args["quiet"])

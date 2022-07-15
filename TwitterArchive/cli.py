@@ -21,9 +21,8 @@ Options:
 """
 
 import argparse
+import itertools
 import json
-import sys
-# TODO: Use a native thread pool instead of multiprocessing
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
@@ -35,6 +34,7 @@ class CapitalisedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
     """Use a more sane capitaliztion in help argparse help menus."""
 
     def add_usage(self, usage, actions, groups, prefix=None):
+        """Usage formatter."""
         if prefix is None:
             prefix = "Usage: "
         return super(CapitalisedHelpFormatter, self).add_usage(
@@ -45,10 +45,15 @@ class CapitalisedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
         )
 
 
+def _nat_int(s):
+    int_val = int(s)
+    if int_val < 1:
+        raise argparse.ArgumentTypeError("Cannot be less than 1")
+    return int_val
+
+
 # TODO: Add dry run
 # TODO: Add quiet
-# TODO: Add no thread pool option
-# TODO: Add --no-clobber
 def build_parser(exit_on_error=True):
     """Build the CLI parser.
 
@@ -79,6 +84,23 @@ def build_parser(exit_on_error=True):
         "--headless",
         action="store_true",
         help="Don't use interactive authentication.",
+    )
+    parser.add_argument(
+        "--no-clobber",
+        action="store_true",
+        help="Don't redownload/overwrite existing media.",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Disable download progress bars",
+    )
+    parser.add_argument(
+        "--num-download-threads",
+        metavar="N",
+        type=_nat_int,
+        default=8,
+        help="Number of threads to use while downloading media.",
     )
     parser.add_argument(
         "-h",
@@ -135,16 +157,16 @@ def main():
     base_dir = Path(args["media_output"])
     base_dir.mkdir(exist_ok=True, parents=True)
 
-    pool = ThreadPool(5)
-    try:
-        for i, tweet in enumerate(tweets, 1):
-            pool.apply_async(download_tweet, args=(tweet, base_dir, 1024, i % 10))
-
-        pool.close()
-        pool.join()
-    except KeyboardInterrupt:
-        pool.terminate()
-        pool.join()
-
-    sys.stdout.flush()
-    sys.stderr.flush()
+    num_download_threads = args["num_download_threads"]
+    if num_download_threads == 1:
+        for tweet in tweets:
+            download_tweet(tweet, base_dir, not args["no_clobber"], args["quiet"])
+    else:
+        pool = ThreadPool(num_download_threads)
+        payloads = zip(
+            tweets,
+            itertools.repeat(base_dir),
+            itertools.repeat(not args["no_clobber"]),
+            itertools.repeat(args["quiet"]),
+        )
+        pool.starmap(download_tweet, payloads)

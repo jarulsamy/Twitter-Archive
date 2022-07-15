@@ -88,9 +88,6 @@ Success, you may close this tab!
         :param client_address: Address of the client sending the request.
         :param server: Address of the server itself.
         """
-        print("-----")
-        print(type(request))
-        print("-----")
         self._token = None
         super().__init__(request, client_address, server)
 
@@ -364,15 +361,17 @@ def get_bookmarks(client: tweepy.Client, save_path: Optional[Path] = None) -> di
 def download_tweet(
     tweet_obj: dict,
     base_dir: Path,
+    clobber: bool = True,
+    disable_progress_bar: bool = True,
     chunk_size: int = 1024,
-    position: int = 0,
 ) -> None:
     """Download media from a single tweet.
 
     :param tweet_obj: Dict including all the attributes of the tweet.
     :param base_dir: Base directory to save any media.
+    :param clobber: Overwrite existing files.
+    :param disable_progress_bar: Silence the progress bar.
     :param chunk_size: Chunk size to use while downloading content.
-    :param position: Progress bar position.
     """
     if "id" not in tweet_obj:
         raise AttributeError("Missing attribute ID, is this a valid tweet object?")
@@ -394,6 +393,11 @@ def download_tweet(
                 raise NotImplementedError(f"Type: '{type_}' not supported")
 
             dest = my_dir / Path(urlparse(url).path).name
+            if dest.exists() and not clobber:
+                # TODO Use the logging module
+                print(f"'{dest}' already exists. Skipping.")
+                continue
+
             resp = requests.get(url, stream=True)
             length = resp.headers.get("content-length")
             with open(dest, "wb") as f:
@@ -408,11 +412,11 @@ def download_tweet(
                     for chunk in tqdm(
                         resp.iter_content(chunk_size=chunk_size),
                         ascii=True,
+                        disable=disable_progress_bar,
                         total=num_bars,
                         desc=dest.name,
                         leave=True,
                         unit="KB",
-                        position=position,
                         miniters=1,
                         ncols=80,
                     ):

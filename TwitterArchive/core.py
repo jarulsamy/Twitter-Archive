@@ -6,6 +6,7 @@ Handles authentication with Twitter, and fetching all necessary Tweets.
 import datetime
 import http.server
 import json
+import logging
 import os
 import socketserver
 import time
@@ -18,6 +19,8 @@ from urllib.parse import urlparse, urlunparse
 import requests
 import tweepy
 from tqdm import tqdm
+
+logger = logging.getLogger("twitter-archive.core")
 
 
 class OneShotTCPServer(socketserver.TCPServer):
@@ -164,12 +167,10 @@ def _oauth(
         from dotenv import load_dotenv
 
         load_dotenv()
+        logger.debug("Loaded dotenv")
 
     client_id = client_id or os.environ.get("TWITTER_ARCHIVE_CLIENT_ID")
     client_secret = client_secret or os.environ.get("TWITTER_ARCHIVE_CLIENT_SECRET")
-
-    print(client_id)
-    print(client_secret)
 
     if client_id is None:
         raise ValueError("Missing client ID")
@@ -182,7 +183,10 @@ def _oauth(
         scope=["tweet.read", "users.read", "bookmark.read"],
         client_secret=client_secret,
     )
-    print(oauth2_user_handler.get_authorization_url())
+
+    auth_url = oauth2_user_handler.get_authorization_url()
+    print(auth_url)
+    logger.info("Prompted user with token url: '%s'", auth_url)
 
     if not headless:
         # Start the HTTP server to receive the token.
@@ -190,12 +194,15 @@ def _oauth(
         with OneShotTCPServer(("", REDIRECT_PORT), handler) as httpd:
             handler_inst = httpd.handle_request()
             response_url = handler_inst.token
+            logger.info("Received token from HTTP server: '%s'", response_url)
     else:
         response_url = input("Enter the response url here: ")
+        logger.info("Received token headless: '%s'", response_url)
 
     access_token = oauth2_user_handler.fetch_token(response_url)
     with open(save_path, "w") as fp:
         json.dump(access_token, fp)
+        logger.info("Wrote access token details to '%s'", save_path)
 
     return access_token
 
@@ -233,6 +240,7 @@ def auth(
     """
     cache_path = None if cache_path is None else Path(cache_path)
     if not use_cache or not cache_path.is_file():
+        logger.info("No cached token available. Reauthenticating.")
         access_token = _oauth(
             cache_path,
             client_id=client_id,
@@ -244,9 +252,11 @@ def auth(
         # Try to use the cache if possible.
         with open(cache_path, "r") as json_file:
             access_token = json.load(json_file)
+        logger.info("Loaded cached access token from '%s'", cache_path)
 
         # Check if expired, if so re-auth.
         if float(access_token["expires_at"]) < time.time():
+            logger.info("Cached token is expired. Reauthenticating.")
             access_token = _oauth(
                 cache_path,
                 client_id=client_id,
@@ -276,6 +286,7 @@ def get_bookmarks(client: tweepy.Client, save_path: Optional[Path] = None) -> di
 
     page_token = None
     while True:
+        logging.info("Querying twitter api for page (%s) of bookmarks.", page_token)
         resp = client.get_bookmarks(
             expansions=[
                 "attachments.poll_ids",
@@ -339,6 +350,7 @@ def get_bookmarks(client: tweepy.Client, save_path: Optional[Path] = None) -> di
             tweet["media"] = []
             for media_key in i["attachments"]["media_keys"]:
                 tweet["media"].append(media[media_key].data)
+                logger.info("Found media for tweet, '%s'", media_key)
 
             tweets.append(tweet)
 
@@ -350,9 +362,11 @@ def get_bookmarks(client: tweepy.Client, save_path: Optional[Path] = None) -> di
             break
 
     data = json.dumps(tweets, indent=2, cls=TweetEncoder)
+    logger.info("Serialized all bookmarked tweets")
 
     if save_path is not None:
         with open(save_path, "w") as fp:
+            logger.info("Wrote manifest to '%s'", save_path)
             fp.write(data)
 
     return json.loads(data)
@@ -387,20 +401,24 @@ def download_tweet(
                 variants = [x for x in media["variants"] if "bit_rate" in x]
                 max_variant = max(variants, key=lambda x: x["bit_rate"])
                 url = max_variant["url"]
+                logging.debug("Found video\n  URL: '%s'\n  Bitrate: '%s")
             elif type_ == "photo":
                 url = media["url"]
+                logging.debug("Found photo URL: '%s'")
             else:
-                raise NotImplementedError(f"Type: '{type_}' not supported")
+                raise NotImplementedError(
+                    f"Type '{type_}' not yet supported for downloading"
+                )
 
             dest = my_dir / Path(urlparse(url).path).name
             if dest.exists() and not clobber:
-                # TODO Use the logging module
-                print(f"'{dest}' already exists. Skipping.")
+                logger.info("'%s' already exists. Skipping.", dest)
                 continue
 
             resp = requests.get(url, stream=True)
             length = resp.headers.get("content-length")
             with open(dest, "wb") as f:
+                logging.info("Downloading to '%s'", dest)
                 # No content length header
                 if length is None:
                     f.write(resp.content)
@@ -424,5 +442,5 @@ def download_tweet(
     except KeyError:
         return
     except NotImplementedError as e:
-        print(e)
+        logger.warning(e)
         return

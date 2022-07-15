@@ -33,18 +33,6 @@ class CLITestCase(unittest.TestCase):
 
         self.assertIn("help", stdout.getvalue())
 
-    def test_version_short(self):
-        # Setup
-        stdout = io.StringIO()
-
-        parser = build_parser(False)
-        argv = ["-v"]
-        with contextlib.redirect_stdout(stdout):
-            with self.assertRaises(SystemExit):
-                parser.parse_args(argv)
-
-        self.assertIn(__version__, stdout.getvalue())
-
     def test_version(self):
         # Setup
         stdout = io.StringIO()
@@ -73,6 +61,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -92,6 +81,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -111,6 +101,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -130,6 +121,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -149,6 +141,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -168,6 +161,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -187,6 +181,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -206,6 +201,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -232,6 +228,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -256,6 +253,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -275,6 +273,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": True,
                 "quiet": False,
                 "num_download_threads": 8,
+                "verbose": 0,
             },
         )
 
@@ -294,6 +293,7 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": False,
                 "num_download_threads": 4,
+                "verbose": 0,
             },
         )
 
@@ -319,5 +319,66 @@ class CLITestCase(unittest.TestCase):
                 "no_clobber": False,
                 "quiet": True,
                 "num_download_threads": 8,
+                "verbose": 0,
+            },
+        )
+
+    def test_verbose(self):
+        parser = build_parser(False)
+
+        argv = ["-v"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+        self.assertDictEqual(
+            args,
+            {
+                "headless": False,
+                "manifest_input": None,
+                "manifest_output": Path("bookmark-manifest.json"),
+                "media_output": Path("media"),
+                "no_clobber": False,
+                "quiet": False,
+                "num_download_threads": 8,
+                "verbose": 1,
+            },
+        )
+
+    def test_verbose_multiple_short(self):
+        parser = build_parser(False)
+
+        argv = ["-vvv"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+        self.assertDictEqual(
+            args,
+            {
+                "headless": False,
+                "manifest_input": None,
+                "manifest_output": Path("bookmark-manifest.json"),
+                "media_output": Path("media"),
+                "no_clobber": False,
+                "quiet": False,
+                "num_download_threads": 8,
+                "verbose": 3,
+            },
+        )
+
+    def test_verbose_multiple_long(self):
+        parser = build_parser(False)
+
+        argv = ["--verbose", "--verbose", "--verbose"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+        self.assertDictEqual(
+            args,
+            {
+                "headless": False,
+                "manifest_input": None,
+                "manifest_output": Path("bookmark-manifest.json"),
+                "media_output": Path("media"),
+                "no_clobber": False,
+                "quiet": False,
+                "num_download_threads": 8,
+                "verbose": 3,
             },
         )

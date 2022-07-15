@@ -5,6 +5,7 @@
 <a href="https://pypi.org/project/Twitter-Archive/"><img alt="PyPI" src="https://img.shields.io/pypi/v/Twitter-Archive"></a>
 <img alt="Total LOC" src="https://img.shields.io/tokei/lines/github/jarulsamy/Twitter-Archive">
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<a href="https://github.com/jarulsamy/Twitter-Archive/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/jarulsamy/Twitter-Archive"></a>
 </p>
 
 A CLI Python application to download all media (and hopefully more) from

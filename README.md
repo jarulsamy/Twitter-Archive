@@ -13,9 +13,9 @@ bookmarked tweets (for now). Eventually I hope to make this a general archive
 utility for Twitter, allowing users to download/archive all kinds of tweets.
 
 Originally, before the V2 Twitter API, this app used Selenium to try and scrape
-the contents of the a users bookmarks page. Now, since the release of the V2
-API, the application has been rewritten. This new version is much faster and
-more robust.
+the contents of a users bookmarks page. Now, since the release of the V2 API,
+the application has been rewritten. This new version is much faster and more
+robust.
 
 ---
 
@@ -76,9 +76,12 @@ Options:
                         Use an existing manifest and download all media. (default: None)## Acknowledgements
 ```
 
+## Acknowledgements
+
 The Twitter developer team did an excellent job on the new APIs. The new APIs
 are substantially more intuitive and allow us to interact with many more
 features of Twitter. While it did take two years, the openness, transparency,
 and attention to feedback is much appreciated!
 
-The relevant forum post is available [here](https://twittercommunity.com/t/build-with-bookmarks-on-the-twitter-api-v2/168804).
+The relevant forum post is available
+[here](https://twittercommunity.com/t/build-with-bookmarks-on-the-twitter-api-v2/168804).

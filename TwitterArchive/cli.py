@@ -1,32 +1,10 @@
-"""
-Main entrypoint to the program from CLI.
-
-Usage: twitter-archive [-o FILE] [--headless] [-h] [-v] [-m FILE | -i FILE]
-
-A CLI Tool to archive tweets
-
-Options:
-  -o FILE, --media-output FILE
-                        Path to output downloaded media. (default: media)
-  --headless            Don't use interactive authentication. (default:
-                        False)
-  -h, --help            Show this help message ane exit.
-  -v, --version         show program's version number and exit
-  -m FILE, --manifest-output FILE
-                        Path to output bookmark manifest. (default: bookmark-
-                        manifest.json)
-  -i FILE, --manifest-input FILE
-                        Use an existing manifest and download all media.
-                        (default: None)
-"""
-
+"""Main entrypoint to the program from CLI."""
 import argparse
 import itertools
 import json
 import logging
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import Optional
 
 from . import __version__
 from .core import auth, download_tweet, get_bookmarks
@@ -55,8 +33,6 @@ def nat_int(s: str) -> int:
     return int_val
 
 
-# TODO: Add dry run
-# TODO: Add quiet
 def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
     """Build the CLI parser.
 

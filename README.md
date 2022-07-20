@@ -75,7 +75,7 @@ Options:
   --help                Show this help message ane exit.
 ```
 
-## acknowledgment
+## Acknowledgment
 
 The Twitter developer team did an excellent job on the new APIs. The new APIs
 are substantially more intuitive and allow us to interact with many more

@@ -3,6 +3,7 @@ import argparse
 import itertools
 import json
 import logging
+import shutil
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
@@ -12,6 +13,11 @@ from .core import auth, download_tweet, get_bookmarks
 
 class CapitalizedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
     """Use a more sane capitaliztion in help argparse help menus."""
+
+    def __init__(self, prog: str) -> None:
+        """Use the terminal width to determine width."""
+        width, height = shutil.get_terminal_size((80, None))
+        super().__init__(prog, width=width)
 
     def add_usage(self, usage, actions, groups, prefix=None):
         """Usage formatter."""

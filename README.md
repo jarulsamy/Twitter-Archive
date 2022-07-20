@@ -54,29 +54,28 @@ You can view the built-in CLI help menu for more info:
 
 ```txt
 $ twitter-archive --help
-Usage: twitter-archive [-o FILE] [--headless] [--no-clobber] [--quiet] [--num-download-threads N] [-v] [-h] [--version]
-                    [-m FILE | -i FILE]
+Usage: twitter-archive [--headless] [--no-clobber] [--num-download-threads N] [-o FILE] [-i FILE | -m FILE] [--quiet] [-v] [--version] [--help]
 
 A CLI Tool to archive tweets
 
 Options:
--o FILE, --media-output FILE
-                        Path to output downloaded media. (default: media)
---headless            Don't use interactive authentication. (default: False)
---no-clobber          Don't redownload/overwrite existing media. (default: False)
---quiet               Disable download progress bars (default: False)
---num-download-threads N
+  --headless            Don't use interactive authentication. (default: False)
+  --no-clobber          Don't redownload/overwrite existing media. (default: False)
+  --num-download-threads N
                         Number of threads to use while downloading media. (default: 8)
--v, --verbose
--h, --help            Show this help message ane exit.
---version             show program's version number and exit
--m FILE, --manifest-output FILE
-                        Path to output bookmark manifest. (default: bookmark-manifest.json)
--i FILE, --manifest-input FILE
+  -o FILE, --media-output FILE
+                        Path to output downloaded media. (default: media)
+  -i FILE, --manifest-input FILE
                         Use an existing manifest and download all media. (default: None)
+  -m FILE, --manifest-output FILE
+                        Path to output bookmark manifest. (default: bookmark-manifest.json)
+  --quiet               Disable download progress bars (default: False)
+  -v, --verbose
+  --version             show program's version number and exit
+  --help                Show this help message ane exit.
 ```
 
-## Acknowledgements
+## acknowledgment
 
 The Twitter developer team did an excellent job on the new APIs. The new APIs
 are substantially more intuitive and allow us to interact with many more

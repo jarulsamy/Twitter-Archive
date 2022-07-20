@@ -51,15 +51,6 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
     parser._optionals.title = "Options"
 
     parser.add_argument(
-        "-o",
-        "--media-output",
-        metavar="FILE",
-        action="store",
-        type=Path,
-        default=Path("./media"),
-        help="Path to output downloaded media.",
-    )
-    parser.add_argument(
         "--headless",
         action="store_true",
         help="Don't use interactive authentication.",
@@ -70,11 +61,6 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
         help="Don't redownload/overwrite existing media.",
     )
     parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Disable download progress bars",
-    )
-    parser.add_argument(
         "--num-download-threads",
         metavar="N",
         type=nat_int,
@@ -82,25 +68,25 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
         help="Number of threads to use while downloading media.",
     )
     parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-    )
-    parser.add_argument(
-        "-h",
-        "--help",
-        action="help",
-        default=argparse.SUPPRESS,
-        help="Show this help message ane exit.",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {__version__}",
+        "-o",
+        "--media-output",
+        metavar="FILE",
+        action="store",
+        type=Path,
+        default=Path("./media"),
+        help="Path to output downloaded media.",
     )
 
+    # Mutually exclusive options.
     manifest_group = parser.add_mutually_exclusive_group()
+    manifest_group.add_argument(
+        "-i",
+        "--manifest-input",
+        action="store",
+        metavar="FILE",
+        type=Path,
+        help="Use an existing manifest and download all media.",
+    )
     manifest_group.add_argument(
         "-m",
         "--manifest-output",
@@ -110,13 +96,28 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
         default=Path("./bookmark-manifest.json"),
         help="Path to output bookmark manifest.",
     )
-    manifest_group.add_argument(
-        "-i",
-        "--manifest-input",
-        action="store",
-        metavar="FILE",
-        type=Path,
-        help="Use an existing manifest and download all media.",
+
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Disable download progress bars",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+    parser.add_argument(
+        "--help",
+        action="help",
+        default=argparse.SUPPRESS,
+        help="Show this help message ane exit.",
     )
 
     return parser

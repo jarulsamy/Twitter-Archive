@@ -10,14 +10,14 @@ from . import __version__
 from .core import auth, download_tweet, get_bookmarks
 
 
-class CapitalisedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+class CapitalizedHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
     """Use a more sane capitaliztion in help argparse help menus."""
 
     def add_usage(self, usage, actions, groups, prefix=None):
         """Usage formatter."""
         if prefix is None:
             prefix = "Usage: "
-        return super(CapitalisedHelpFormatter, self).add_usage(
+        return super(CapitalizedHelpFormatter, self).add_usage(
             usage,
             actions,
             groups,
@@ -42,7 +42,7 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         add_help=False,
         description="A CLI Tool to archive tweets",
-        formatter_class=CapitalisedHelpFormatter,
+        formatter_class=CapitalizedHelpFormatter,
         exit_on_error=exit_on_error,
     )
 

@@ -57,6 +57,19 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
     parser._optionals.title = "Options"
 
     parser.add_argument(
+        "--client-id",
+        action="store",
+        metavar="ID",
+        help="Specify the client ID.",
+    )
+    parser.add_argument(
+        "--client-secret",
+        action="store",
+        metavar="ID",
+        help="Specify the client ID.",
+    )
+
+    parser.add_argument(
         "--headless",
         action="store_true",
         help="Don't use interactive authentication.",
@@ -72,6 +85,11 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
         type=nat_int,
         default=8,
         help="Number of threads to use while downloading media.",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Disable download progress bars",
     )
     parser.add_argument(
         "-o",
@@ -103,11 +121,7 @@ def build_parser(exit_on_error: bool = True) -> argparse.ArgumentParser:
         help="Path to output bookmark manifest.",
     )
 
-    parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Disable download progress bars",
-    )
+    # Generic
     parser.add_argument(
         "-v",
         "--verbose",
@@ -168,7 +182,12 @@ def main() -> None:
     logger = _setup_logging(args["verbose"])
 
     logger.debug("Authenticating")
-    client = auth(headless=args["headless"], use_dotenv=True)
+    client = auth(
+        headless=args["headless"],
+        client_id=args["client_id"],
+        client_secret=args["client_secret"],
+        use_dotenv=True,
+    )
 
     if args["manifest_input"] is not None:
         logger.info("Loaded existing manifest from '%s'", args["manifest_input"])

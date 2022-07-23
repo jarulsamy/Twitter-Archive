@@ -10,6 +10,8 @@ from TwitterArchive.cli import build_parser
 
 def _default_expected_args():
     return {
+        "client_id": None,
+        "client_secret": None,
         "headless": False,
         "manifest_input": None,
         "manifest_output": Path("bookmark-manifest.json"),
@@ -22,30 +24,6 @@ def _default_expected_args():
 
 
 class CLITestCase(unittest.TestCase):
-    def test_help_long(self):
-        # Setup
-        stdout = io.StringIO()
-
-        parser = build_parser(False)
-        argv = ["--help"]
-        with contextlib.redirect_stdout(stdout):
-            with self.assertRaises(SystemExit):
-                parser.parse_args(argv)
-
-        self.assertIn("help", stdout.getvalue())
-
-    def test_version(self):
-        # Setup
-        stdout = io.StringIO()
-
-        parser = build_parser(False)
-        argv = ["--version"]
-        with contextlib.redirect_stdout(stdout):
-            with self.assertRaises(SystemExit):
-                parser.parse_args(argv)
-
-        self.assertIn(__version__, stdout.getvalue())
-
     def test_no_args(self):
         parser = build_parser(False)
 
@@ -54,75 +32,27 @@ class CLITestCase(unittest.TestCase):
         args = vars(args)
         self.assertDictEqual(args, _default_expected_args())
 
-    def test_media_arg_short(self):
+    def test_client_id(self):
         parser = build_parser(False)
 
-        argv = ["-o", "foobar"]
+        argv = ["--client-id", "foobar"]
         args = parser.parse_args(argv)
         args = vars(args)
 
         expected = _default_expected_args()
-        expected["media_output"] = Path("foobar")
+        expected["client_id"] = "foobar"
 
         self.assertDictEqual(args, expected)
 
-    def test_media_arg_long(self):
+    def test_client_secret(self):
         parser = build_parser(False)
 
-        argv = ["--media-output", "foobar"]
+        argv = ["--client-secret", "foobar"]
         args = parser.parse_args(argv)
         args = vars(args)
 
         expected = _default_expected_args()
-        expected["media_output"] = Path("foobar")
-
-        self.assertDictEqual(args, expected)
-
-    def test_manifest_arg_short(self):
-        parser = build_parser(False)
-
-        argv = ["-m", "foobar"]
-        args = parser.parse_args(argv)
-        args = vars(args)
-
-        expected = _default_expected_args()
-        expected["manifest_output"] = Path("foobar")
-
-        self.assertDictEqual(args, expected)
-
-    def test_manifest_arg_long(self):
-        parser = build_parser(False)
-
-        argv = ["--manifest-output", "foobar"]
-        args = parser.parse_args(argv)
-        args = vars(args)
-
-        expected = _default_expected_args()
-        expected["manifest_output"] = Path("foobar")
-
-        self.assertDictEqual(args, expected)
-
-    def test_manifest_input_short(self):
-        parser = build_parser(False)
-
-        argv = ["-i", "foobar"]
-        args = parser.parse_args(argv)
-        args = vars(args)
-
-        expected = _default_expected_args()
-        expected["manifest_input"] = Path("foobar")
-
-        self.assertDictEqual(args, expected)
-
-    def test_manifest_input_long(self):
-        parser = build_parser(False)
-
-        argv = ["--manifest-input", "foobar"]
-        args = parser.parse_args(argv)
-        args = vars(args)
-
-        expected = _default_expected_args()
-        expected["manifest_input"] = Path("foobar")
+        expected["client_secret"] = "foobar"
 
         self.assertDictEqual(args, expected)
 
@@ -135,44 +65,6 @@ class CLITestCase(unittest.TestCase):
 
         expected = _default_expected_args()
         expected["headless"] = True
-
-        self.assertDictEqual(args, expected)
-
-    def test_mutual_exclusion(self):
-        parser = build_parser(False)
-
-        argv = ["-m", "manifest-output", "-i", "manifest-input"]
-        with self.assertRaises(argparse.ArgumentError):
-            parser.parse_args(argv)
-
-    def test_many_short(self):
-        parser = build_parser(False)
-
-        argv = ["-o", "media-output", "-m", "manifest-output"]
-        args = parser.parse_args(argv)
-        args = vars(args)
-
-        expected = _default_expected_args()
-        expected["media_output"] = Path("media-output")
-        expected["manifest_output"] = Path("manifest-output")
-
-        self.assertDictEqual(args, expected)
-
-    def test_many_long(self):
-        parser = build_parser(False)
-
-        argv = [
-            "--media-output",
-            "media-output",
-            "--manifest-output",
-            "manifest-output",
-        ]
-        args = parser.parse_args(argv)
-        args = vars(args)
-
-        expected = _default_expected_args()
-        expected["media_output"] = Path("media-output")
-        expected["manifest_output"] = Path("manifest-output")
 
         self.assertDictEqual(args, expected)
 
@@ -218,6 +110,116 @@ class CLITestCase(unittest.TestCase):
 
         self.assertDictEqual(args, expected)
 
+    def test_media_arg_short(self):
+        parser = build_parser(False)
+
+        argv = ["-o", "foobar"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["media_output"] = Path("foobar")
+
+        self.assertDictEqual(args, expected)
+
+    def test_media_arg_long(self):
+        parser = build_parser(False)
+
+        argv = ["--media-output", "foobar"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["media_output"] = Path("foobar")
+
+        self.assertDictEqual(args, expected)
+
+    def test_manifest_output_short(self):
+        parser = build_parser(False)
+
+        argv = ["-m", "foobar"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["manifest_output"] = Path("foobar")
+
+        self.assertDictEqual(args, expected)
+
+    def test_manifest_output_long(self):
+        parser = build_parser(False)
+
+        argv = ["--manifest-output", "foobar"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["manifest_output"] = Path("foobar")
+
+        self.assertDictEqual(args, expected)
+
+    def test_manifest_input_short(self):
+        parser = build_parser(False)
+
+        argv = ["-i", "foobar"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["manifest_input"] = Path("foobar")
+
+        self.assertDictEqual(args, expected)
+
+    def test_manifest_input_long(self):
+        parser = build_parser(False)
+
+        argv = ["--manifest-input", "foobar"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["manifest_input"] = Path("foobar")
+
+        self.assertDictEqual(args, expected)
+
+    def test_mutual_exclusion(self):
+        parser = build_parser(False)
+
+        argv = ["-m", "manifest-output", "-i", "manifest-input"]
+        with self.assertRaises(argparse.ArgumentError):
+            parser.parse_args(argv)
+
+    def test_many_short(self):
+        parser = build_parser(False)
+
+        argv = ["-o", "media-output", "-m", "manifest-output"]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["media_output"] = Path("media-output")
+        expected["manifest_output"] = Path("manifest-output")
+
+        self.assertDictEqual(args, expected)
+
+    def test_many_long(self):
+        parser = build_parser(False)
+
+        argv = [
+            "--media-output",
+            "media-output",
+            "--manifest-output",
+            "manifest-output",
+        ]
+        args = parser.parse_args(argv)
+        args = vars(args)
+
+        expected = _default_expected_args()
+        expected["media_output"] = Path("media-output")
+        expected["manifest_output"] = Path("manifest-output")
+
+        self.assertDictEqual(args, expected)
+
     def test_verbose(self):
         parser = build_parser(False)
 
@@ -253,3 +255,27 @@ class CLITestCase(unittest.TestCase):
         expected["verbose"] = 3
 
         self.assertDictEqual(args, expected)
+
+    def test_version(self):
+        # Setup
+        stdout = io.StringIO()
+
+        parser = build_parser(False)
+        argv = ["--version"]
+        with contextlib.redirect_stdout(stdout):
+            with self.assertRaises(SystemExit):
+                parser.parse_args(argv)
+
+        self.assertIn(__version__, stdout.getvalue())
+
+    def test_help(self):
+        # Setup
+        stdout = io.StringIO()
+
+        parser = build_parser(False)
+        argv = ["--help"]
+        with contextlib.redirect_stdout(stdout):
+            with self.assertRaises(SystemExit):
+                parser.parse_args(argv)
+
+        self.assertIn("help", stdout.getvalue())

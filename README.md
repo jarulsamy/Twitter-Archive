@@ -88,6 +88,17 @@ leaking your keys. For example:
 $ twitter-archive --client-id="YOUR_CLIENT_ID_HERE" --client-secret="YOUR_CLIENT_SECRET_HERE"
 ```
 
+#### Usage
+
+You can then invoke the app with:
+
+    $ twitter-archive
+
+By default, the app will print a URL to prompt the user to authorize the
+application with Twitters official APIs. Once you navigate to that link and
+login with Twitter, the app will fetch a manifest of all the bookmarked tweets
+and begin saving any photos/videos to disk.
+
 You can view the built-in CLI help menu for more info:
 
 ```txt
@@ -115,17 +126,6 @@ Options:
   --version             show program's version number and exit
   --help                Show this help message ane exit.
 ```
-
-#### Usage
-
-You can then invoke the app with:
-
-    $ twitter-archive
-
-By default, the app will print a URL to prompt the user to authorize the
-application with Twitters official APIs. Once you navigate to that link and
-login with Twitter, the app will fetch a manifest of all the bookmarked tweets
-and begin saving any photos/videos to disk.
 
 ## Acknowledgment
 

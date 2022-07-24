@@ -27,12 +27,13 @@ _Twitter-Archive_ can be installed with `pip`
 
     $ pip install twitter-archive
 
-Alternatively, you can clone this repository and install from the repository
+Alternatively, you can fork, clone and install from the repository
 instead of from PyPi.
-
-    $ git clone https://github.com/jarulsamy/Twitter-Archive
+    
+    $ Fork the repository
+    $ git clone https://github.com//your_username/Twitter-Archive
     $ cd Twitter-Archive
-    $ pip install .
+    $ pip install -r requirements.txt
 
 To properly authenticate with the Twitter API, you will have to create a
 developer application. This will provide you with a client ID and client secret.

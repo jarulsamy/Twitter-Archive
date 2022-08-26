@@ -39,16 +39,8 @@ developer application. This will provide you with a client ID and client secret.
 
 ### Twitter Developer App Setup
 
-1. Create a Twitter developer account here: [Twitter Developer
-   Portal](https://developer.twitter.com/en/portal/dashboard)
-2. Create an project and application.
-3. Generate an OAuth 2.0 client ID and client secret by following this
-   documentation: [Twitter API Key and Secret
-   Docs](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/api-key-and-secret)
-
-   > Ensure you grant these scopes: 'tweet.read', 'users.read', and 'bookmark.read'
-
-4. Save your tokens to use with this application.
+Refer to [these](docs/twitter_dev_setup.md) docs to setup your Twitter developer
+account and project.
 
 ### Authentication and Usage
 
